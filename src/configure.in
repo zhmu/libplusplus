@@ -1,0 +1,127 @@
+# process this file with autoconf to generate a configure script
+AC_PREREQ(2.51)
+AC_INIT([libplusplus],[1.0],[rink+libplusplus@il.fontys.nl])
+AC_CONFIG_SRCDIR([src/network.cc])
+AM_INIT_AUTOMAKE(libplusplus, 1.0)
+
+# which OS is this?
+AC_CANONICAL_HOST
+case "$host" in
+	*freebsd*) # FreeBSD
+		OS="FreeBSD"
+		CXXFLAGS="$CXXFLAGS -DOS_FREEBSD -DOS_BSD"
+		PC_CFLAGS="$PC_CFLAGS -DOS_FREEBSD -DOS_BSD"
+		PC_LIBS="$PC_LIBS -lipx"
+		;;
+	  *linux*) # Linux
+	  	OS="Linux"
+		CXXFLAGS="$CXXFLAGS -DOS_LINUX -D_GNU_SOURCE"
+		PC_CFLAGS="$PC_CFLAGS -DOS_LINUX -D_GNU_SOURCE"
+		;;
+        *solaris*) # Solaris
+	  	OS="Solaris"
+		CXXFLAGS="$CXXFLAGS -DOS_SOLARIS"
+		PC_CFLAGS="$PC_CFLAGS -DOS_SOLARIS"
+		;;
+	    *win*) # Windows (the horror!)
+	  	OS="Windows"
+		CXXFLAGS="$CXXFLAGS -DOS_WINDOWS -D_GNU_SOURCE"
+		PC_CFLAGS="$PC_CFLAGS -DOS_WINDOWS -D_GNU_SOURCE"
+		;;
+		*) # anything else
+		OS="UNIX"
+		;;
+esac
+
+# fix up the include path
+CXXFLAGS="$CXXFLAGS -I../include"
+
+# check for programs
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_LIBTOOL
+AC_CHECK_PROG(PKGCONFIG,[pkg-config],[yes],[no],[],[])
+if test "$PKGCONFIG" = "no"; then
+	AC_MSG_ERROR([*** pkg-config is required])
+fi
+
+# we need C++ to compile
+AC_REQUIRE_CPP
+
+# check for header files
+AC_HEADER_STDC
+AC_CHECK_HEADERS([fcntl.h netinet/in.h string.h sys/signal.h])
+
+# check for typedefs, structures  and compile characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+# check for library functions
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_VPRINTF
+
+# check if MySQL paths are overridden
+AC_ARG_WITH(mysql,
+[  --with-mysql=dir          Look for MySQL libs/includes in DIR],
+[
+	LDFLAGS="$LDFLAGS -L$with_mysql/lib -L$with_mysql/lib/mysql"
+	PC_LIBS="$PC_LIBS -L$with_mysql/lib -L$with_mysql/lib/mysql"
+	CPPFLAGS="$CPPFLAGS -I$with_mysql/include"
+	PC_CFLAGS="$PC_CFLAGS -I$with_mysql/include"
+])
+
+# check if PostgreSQL paths are overridden
+AC_ARG_WITH(pgsql,
+[  --with-pgsql=dir          Look for PostgreSQL libs/includes in DIR],
+[
+	LDFLAGS="$LDFLAGS -L$with_pgsql/lib"
+	PC_LIBS="$PC_LIBS -L$with_pgsql/lib"
+	CPPFLAGS="$CPPFLAGS -I$with_pgsql/include"
+	PC_CFLAGS="$PC_CFLAGS -I$with_pgsql/include"
+])
+
+# check if SQLite paths are overridden
+AC_ARG_WITH(sqlite,
+[  --with-sqlite=dir         Look for SQLitelibs/includes in DIR],
+[
+	LDFLAGS="$LDFLAGS -L$with_sqlite/lib"
+	PC_LIBS="$PC_LIBS -L$with_sqlite/lib"
+	CPPFLAGS="$CPPFLAGS -I$with_sqlite/include"
+	PC_CFLAGS="$PC_CFLAGS -I$with_sqlite/include"
+])
+
+# check for database support
+AC_CHECK_LIB([mysqlclient], [mysql_init], [MYSQL=1])
+AC_CHECK_LIB([pq], [PQconnectdb], [PGSQL=1])
+AC_CHECK_LIB([sqlite3], [sqlite3_open], [SQLITE=1])
+if test "$MYSQL" = "1"; then
+	AC_DEFINE(DB_MYSQL)
+	CXXFLAGS="$CXXFLAGS -DDB_MYSQL"
+	PC_LIBS="$PC_LIBS -lmysqlclient"
+	PC_CFLAGS="$PC_CFLAGS -DDB_MYSQL"
+fi
+if test "$PGSQL" = "1"; then
+	AC_DEFINE(DB_PGSQL)
+	CXXFLAGS="$CXXFLAGS -DDB_PGSQL"
+	PC_LIBS="$PC_LIBS -lpq"
+	PC_CFLAGS="$PC_CFLAGS -DDB_PGSQL"
+fi
+if test "$SQLITE" = "1"; then
+	AC_DEFINE(DB_SQLITE)
+	CXXFLAGS="$CXXFLAGS -DDB_SQLITE"
+	PC_LIBS="$PC_LIBS -lsqlite3"
+	PC_CFLAGS="$PC_CFLAGS -DDB_SQLITE"
+fi
+
+# build the libplusplus.pc file
+AC_SUBST(PC_LIBS)
+AC_SUBST(PC_CFLAGS)
+#echo -n "building libplusplus.pc ..."
+#cp libplusplus.pc.in libplusplus.pc
+#echo "Libs: $PC_LIBS -lplusplus" >> libplusplus.pc
+#echo "Cflags: -I$/include $PC_CFLAGS" >> libplusplus.pc
+#echo " done"
+
+AC_OUTPUT([Makefile libplusplus.pc src/Makefile include/Makefile])

@@ -1,0 +1,13 @@
+This is libplusplus, an extremely easy to use C++ library which is designed to
+simply your programming tasks. Currently, it offers the following features:
+
+- Portablility: tested on FreeBSD 4.8, 5.0 and 5.1, Linux 2.2.20, 2.4.20,
+                2.4.21.
+- Networking: Includes support for client/server applications using IPv4
+              networks. IPX is supported, but currently FreeBSD only
+- Configuration files: Can parse Samba-style configuration files.
+- Databases: Portable database API, currently only MySQL supported
+- Examples: A load of neat examples can be found in the examples/ directory.
+
+Should any bugs or problems be encountered, feel free to contact me at
+rink+libplusplus at il dot fontys dot nl
